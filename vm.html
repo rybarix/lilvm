@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Simple VM with assembly like instructions.</title>
+	<style>
+		:root {
+			--gray-500: hsl(216, 20%, 83%);
+		}
+
+		* { box-sizing: border-box; padding: 0; margin: 0;}
+		body,html { font-size: 1rem;  }
+
+
+		body {
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+		}
+
+		footer {
+			padding-top: 1.5rem;
+		}
+
+		nav {
+			padding: 0.5rem;
+			border-top: 1px solid var(--gray-500);
+		}
+		nav ul {
+			display: flex;
+			gap: 0 1.5rem;
+			list-style-type: none;
+		}
+
+		.hstack {
+			display: flex;
+			flex-flow: row;
+			gap: 0 0.8rem;
+		}
+
+		.page {
+			margin: 0 auto;
+			max-width: 1200px;
+		}
+
+		.primary { background: hsl(200, 70%, 50%); color: white; }
+		.grayish { background: var(--gray-500); color: hsla(0, 0%, 0%, 0.7); }
+
+		.btn {
+			border: none;
+			padding: 6px 14px;
+			box-shadow: 0 1px 4px hsla(0, 0%, 0%, 0.25), 0 1px 1px inset hsl(193, 27%, 94%);
+			margin: 10px 0;
+			text-decoration: none;
+		}
+
+		.round {
+			border-radius: 6px;
+		}
+
+		.grid {
+			gap: 4px;
+			display: grid;
+			height: 100%;
+			width: 100%;
+			grid-template-areas:
+				"h h h"
+				"a r b"
+				"a r b"
+				"a r b";
+
+			grid-template-rows: auto 1fr 1fr 1fr;
+  		grid-template-columns: 350px 100px 1fr;
+			font-size: 0.8rem;
+		}
+
+		.grid > div {
+			padding: 0.3rem;
+		}
+
+		.header {
+			grid-area: h;
+			display: flex;
+			justify-content: space-between;
+		}
+
+		.editor {
+			grid-area: a;
+
+			& textarea {
+				width: 100%;
+				height: 100%;
+				resize: none;
+				padding: 0.5rem;
+				border: 1px solid var(--gray-500);
+				font-family: monospace;
+			}
+		}
+		.table {
+			width: 100%;
+			border-collapse:collapse;
+			border: 1px solid var(--gray-500);
+		}
+
+		.table td {
+			padding: 0.05rem 0.2rem;
+			border: 1px solid var(--gray-500);
+			border-radius: 2px;
+			font-family: monospace;
+			text-align: right;
+		}
+
+
+		.memory {
+			grid-area: b;
+			width: 100%;
+			font-size: 0.75rem;
+			overflow: auto;
+
+			& table {
+				width: 100%;
+				word-break: normal;
+			}
+		}
+		.registers { grid-area: r; }
+	</style>
+</head>
+<body>
+	<div class="page">
+		<div class="grid">
+			<div class="header">
+				<div class="hstack">
+					<button class="btn primary round" id="run">Run</button>
+					<button class="btn primary round" id="run-step">Run step</button>
+				</div>
+				<div class="hstack">
+					<button class="btn grayish round" id="reset-vm">Purge mem, registers, PC</button>
+					<a class="btn grayish round" href="./vm-reference.html">Reference</a>
+				</div>
+			</div>
+			<div class="editor round">
+				<textarea id="editor">
+SET 0 R0    ; init registers for loop
+SET 100 R1
+
+looplab:    ; loop label
+
+STORE R0 R0 ; at addr R0 store R0
+INC R0      ; increment R0
+
+NEQ R0 R1 @looplab ; if R0 != R1 jump
+				</textarea>
+			</div>
+			<div class="registers round">
+				<div class="registers-table"></div>
+			</div>
+			<div class="memory round">
+			</div>
+		</div>
+
+		<footer>
+			<nav>
+				<ul>
+					<li><a href="https://github.com/SandroRybarik/lilvm">Repository</a></li>
+					<li><a href="./vm-reference.html">📒 Instructions reference</a></li>
+				</ul>
+			</nav>
+		</footer>
+	</div>
+
+
+	<script defer type="module">
+		import { VirtualMachine } from './vm.js';
+		const vm = new VirtualMachine({ onLog: (value) => { console.info(value) }, registerCount: 10, memorySize: 1024, maxSteps: 10000, });
+
+		const runButton = document.querySelector('button#run');
+		const runStepButton = document.querySelector('button#run-step');
+		const resetVmButton = document.querySelector('button#reset-vm');
+		const codeEditor = document.querySelector('textarea#editor')
+
+		/**
+		 * @param {keyof HTMLElementTagNameMap} x
+		 * @param {null | (el: ReturnType<typeof document.createElement>) => void} opts
+		 */
+		const component = (x, opts = null) => {
+			const el = document.createElement(x);
+			if (opts !== null) opts(el);
+			return el;
+		}
+
+		class MemoryUI {
+			#root
+			#memory
+			#table
+			#rows
+			#cols
+
+			/**
+			 * @param {HTMLElement} root
+			 * @param {Int32Array} memory
+			*/
+			constructor(root, memory, rows, cols) {
+				this.#root = root;
+				this.#memory = memory;
+				this.#rows = rows;
+				this.#cols = cols;
+			}
+
+			setup() {
+				const table = component('table', e => { e.classList.add('table'); });
+				for (let i = 0; i < this.#rows; i++) {
+					const row = component('tr');
+					for (let j = 0; j < this.#cols; j++) {
+
+						row.append(component('td', td => {
+							td.textContent = '0';
+						}));
+
+						table.append(row)
+					}
+				}
+
+				this.#table = table;
+				this.#root.appendChild(table);
+			}
+
+			/**
+			 * Update individual memory cell (cheap)
+			 * @param {number} nthCell
+			 * @param {number} newValue
+			 */
+			update(nthCell, newValue) {
+				const getRow = nth => Math.floor(nth / this.#cols);
+				const getCol = nth => Math.floor(nth % this.#cols);
+
+				const row = this.#table.children.item(getRow(nthCell));
+				const col = row.children.item(getCol(nthCell));
+				col.textContent = `${newValue}`;
+			}
+
+			/**
+			 * Update all memory cells with single value (expensive)
+			 * @param {number} value
+			 */
+			fill(value) {
+				for (let i = 0; i < this.#memory.length; i++) {
+					this.update(i, value);
+				}
+			}
+		}
+
+		const memUI = new MemoryUI(document.querySelector('.memory'), vm.memory(), 32, 32);
+		memUI.setup();
+
+		const regUI = new MemoryUI(document.querySelector('.registers-table'), vm.registers(), 10, 1);
+		regUI.setup();
+
+		vm.watchMemory((val, idx) => {
+			memUI.update(idx, val);
+		})
+
+		vm.watchRegisters((val, idx) => {
+			regUI.update(idx, val);
+		})
+
+		runButton.onclick = () => {
+			vm.load(codeEditor.value);
+			vm.run();
+		}
+
+		runStepButton.onclick = () => {
+			vm.load(codeEditor.value, false);
+			console.log('Running step');
+			vm.runStep();
+		}
+
+		resetVmButton.onclick = () => {
+			vm.eraseRegisters();
+			vm.eraseMemory();
+			vm.setPC(0);
+			memUI.fill(0);
+			regUI.fill(0);
+		}
+	</script>
+</body>
+</html>

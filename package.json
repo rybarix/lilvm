@@ -1,0 +1,17 @@
+{
+  "name": "lilvm",
+  "version": "1.0.0",
+  "description": "lilVM is small toy virtual machine for education purposes.",
+  "main": "vm.js",
+  "type": "module",
+  "scripts": {
+    "test": "node vm.spec.js"
+  },
+  "keywords": ["virtual machine"],
+  "author": "Sandro Rybarik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SandroRybarik/lilvm"
+  }
+}

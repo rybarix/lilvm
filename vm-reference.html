@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>lilVM reference</title>
+
+	<style>
+		body, html {
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+		}
+		.tal {
+			text-align: left;
+		}
+
+		.ins {
+			color: brown
+		}
+
+		.code {
+			background-color: hsl(220, 0%, 94%);
+			padding: 0.1rem 0.2rem;
+			border-radius: 4px;
+		}
+
+		.wrap {
+			overflow-x: auto;
+			position: relative;
+		}
+
+		table {
+			width: 100%;
+			font-size: 1rem;
+			line-height: 1.25rem;
+			text-align: left;
+			color: #444b58;
+
+			& tbody tr {
+				padding-left: 1.5rem;
+				padding-right: 1.5rem;
+				border-bottom-width: 1px;
+			}
+
+			& tbody th {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-left: 1.5rem;
+				padding-right: 1.5rem;
+				font-weight: 500;
+				color: #111827;
+				white-space: nowrap;
+			}
+
+			& tbody td {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-left: 1.5rem;
+				padding-right: 1.5rem;
+			}
+		}
+
+		thead {
+			font-size: 0.75rem;
+			line-height: 1rem;
+			color: #374151;
+			text-transform: uppercase;
+			background-color: #F9FAFB;
+
+			& th {
+				padding-top: 0.75rem;
+				padding-bottom: 0.75rem;
+				padding-left: 1.5rem;
+				padding-right: 1.5rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<table>
+			<caption>
+				lilVM instruction reference
+			</caption>
+			<thead>
+				<tr>
+					<th scope="col">Instruction</th>
+					<th scope="col">Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">INC</span> RX</code>
+					</th>
+					<td>Increments value at register RX</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">DEC</span> RX</code>
+					</th>
+					<td>Decrements value at register RX</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">SET</span> :number: RX</code>
+					</th>
+					<td>Sets decimal number value in register RX</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">LOAD</span> RA RD</code>
+					</th>
+					<td>Loads value from memory at address RA (register value) to destination register RD.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">LOADIM</span> :number: RD</code>
+					</th>
+					<td>Loads decimal number value to destination register RD.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">STORE</span> RA RV</code>
+					</th>
+					<td>Stores value to memory at address RA (register value) from value register RV.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">EQ</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX == RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">NEQ</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX != RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">LT</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX &lt; RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">LTE</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX &lt;= RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">GT</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX &gt; RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">GTE</span> RX RY @:label:</code>
+					</th>
+					<td>Compares RX, RY values and if <code class="code">RX &gt;= RY</code> jumps to @:label:</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">ADD</span> RA RB RC</code>
+					</th>
+					<td>Adds registers RA, RB. <code class="code">RC = RA + RB</code></td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">SUB</span> RA RB RC</code>
+					</th>
+					<td>Subtracts registers RA, RB. <code class="code">RC = RA - RB</code>.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">MUL</span> RA RB RC</code>
+					</th>
+					<td>Integer multiplication of registers RA, RB. <code class="code">RC = RA * RB</code>.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">DIV</span> RA RB RC</code>
+					</th>
+					<td>Integer division of registers RA, RB. <code class="code">RC = RA / RB</code>.</td>
+				</tr>
+				<tr>
+					<th class="tal" scope="row">
+						<code><span class="ins">MOD</span> RA RB RC</code>
+					</th>
+					<td>Mod division of registers RA, RB. <code class="code">RC = RA % RB</code>.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</body>
+</html>
