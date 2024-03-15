@@ -5,7 +5,7 @@
 
 ## Running the VM
 
-Either go to [lilVM online playground](http://SandroRybarik.github.io/lilvm)
+Either go to [lilVM online playground](http://rybarix.github.io/lilvm)
 
 or run locally:
 
